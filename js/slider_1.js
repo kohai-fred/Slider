@@ -31,85 +31,31 @@ class SliderSimple {
             control_prevId: String,
             control_nextId: String,
             dotsId: String,
-            // timer: Number,
         }
     ) {
         this.slider = document.querySelector(`#${s.id}`);
         this.wrapper = document.querySelector(`#${s.id} .${s.wrapper_class}`);
         this.elements = Array.from(this.wrapper.children);
         this.navigation = document.querySelector(`#${s.id} .${s.navigation}`);
-        if (this.navigation) {
-            SliderSimple.addNavigationCSS(this);
-            this.prev = this.navigation.firstElementChild;
-            this.next = this.navigation.lastElementChild.firstElementChild;
-            this.next.addEventListener("click", this.slideNext.bind(this));
-            this.prev.addEventListener("click", this.slidePrevious.bind(this));
-            console.log("prev:", this.prev, " next:", this.next);
-        }
         this.controlPlay = document.querySelector(`#${s.control_playId}`);
         this.controlStop = document.querySelector(`#${s.control_stopId}`);
         this.controlPrev = document.querySelector(`#${s.control_prevId}`);
         this.controlNext = document.querySelector(`#${s.control_nextId}`);
-        if (this.controlPlay) {
-            this.controlPlay.addEventListener(
-                "click",
-                this.startTimer.bind(this)
-            );
-        }
-        if (this.controlStop) {
-            this.controlStop.addEventListener(
-                "click",
-                this.stopTimer.bind(this)
-            );
-        }
-        if (this.controlNext) {
-            console.log("cNEXT:");
-            this.controlNext.addEventListener(
-                "click",
-                this.slideNext.bind(this)
-            );
-        }
-        if (this.controlPrev) {
-            this.controlPrev.addEventListener(
-                "click",
-                this.slidePrevious.bind(this)
-            );
-        }
         this.dotsContainer = document.querySelector(`#${s.dotsId}`);
-        if (this.dotsContainer) {
-            this.createDots();
-        }
 
         this.padding = s.padding ?? 0;
         this.gutter = s.gutter ?? 0;
         this.timing = s.timing ?? 2500;
         this.speed = s.speed ?? 1500;
         this.autoplay = s.autoplay ?? true;
-        if (this.autoplay) {
-            this.startTimer();
-            this.addListenerTimerMouseInOut();
-            console.log("__AUTOPLAY__:");
-        }
-
-        this.wrapper.addEventListener(
-            "touchstart",
-            this.touchStart.bind(this, event),
-            false
-        );
-        this.wrapper.addEventListener(
-            "touchend",
-            this.touchEnd.bind(this, event),
-            false
-        );
     }
-    count = 0;
-    clone;
-    timerId;
-    isInMovement = false;
-    touchstartX = 0;
-    touchstartY = 0;
-    touchendX = 0;
-    touchendY = 0;
+
+    static COUNT = 0;
+    static CLONE;
+    static TIMER_ID;
+    static IS_IN_MOVEMENT = false;
+    static TOUCH_START_X = 0;
+    static TOUCH_END_X = 0;
 
     static addBaseCSS = function (vm) {
         vm.slider.classList.add("hls_slider");
@@ -119,140 +65,195 @@ class SliderSimple {
                 element.style.padding = `${vm.padding}px`;
             });
         }
-        console.log("init:", vm.wrapper);
     };
 
     static cloneNode = function (vm) {
-        vm.clone = vm.elements[0].cloneNode(true);
-        vm.wrapper.append(vm.clone);
+        SliderSimple.CLONE = vm.elements[0].cloneNode(true);
+        vm.wrapper.append(SliderSimple.CLONE);
     };
     static addNavigationCSS = function (vm) {
-        const sliderWidth = vm.slider.clientWidth;
-        console.log("sliderWidth:", sliderWidth);
         vm.navigation.classList.add("hls_navigation");
         vm.navigation.style.padding = `${vm.padding}px`;
     };
 
-    slideNext = function () {
-        if (!this.isInMovement) {
-            this.toggleIsInMovement();
+    static checkElementExistAndAddListener(vm) {
+        if (vm.controlNext) {
+            vm.controlNext.addEventListener(
+                "click",
+                SliderSimple.slideNext.bind(vm)
+            );
+        }
+        if (vm.controlPrev) {
+            vm.controlPrev.addEventListener(
+                "click",
+                SliderSimple.slidePrevious.bind(vm)
+            );
+        }
+        if (vm.controlPlay) {
+            vm.controlPlay.addEventListener(
+                "click",
+                SliderSimple.startTimer.bind(vm)
+            );
+        }
+        if (vm.controlStop) {
+            vm.controlStop.addEventListener(
+                "click",
+                SliderSimple.stopTimer.bind(vm)
+            );
+        }
+        if (vm.dotsContainer) {
+            SliderSimple.createDots(vm);
+        }
+        if (vm.navigation) {
+            SliderSimple.addNavigationCSS(vm);
+            vm.prev = vm.navigation.firstElementChild;
+            vm.next = vm.navigation.lastElementChild.firstElementChild;
+            vm.next.addEventListener("click", SliderSimple.slideNext.bind(vm));
+            vm.prev.addEventListener(
+                "click",
+                SliderSimple.slidePrevious.bind(vm)
+            );
+        }
+        if (vm.autoplay) {
+            SliderSimple.startTimer.bind(vm)();
+            SliderSimple.addListenerTimerMouseInOut.bind(vm)();
+        }
 
+        vm.wrapper.addEventListener(
+            "touchstart",
+            SliderSimple.touchStart.bind(vm, event),
+            false
+        );
+        vm.wrapper.addEventListener(
+            "touchend",
+            SliderSimple.touchEnd.bind(vm, event),
+            false
+        );
+    }
+
+    static slideNext = function () {
+        if (!SliderSimple.IS_IN_MOVEMENT) {
+            SliderSimple.toggleIsInMovement(this);
             this.wrapper.style.transition = `${this.speed}ms linear`;
-            this.count++;
-            const position = -this.elements[0].clientWidth * this.count;
+            SliderSimple.COUNT++;
+            const position = -this.elements[0].clientWidth * SliderSimple.COUNT;
             this.wrapper.style.transform = `translateX(${position}px)`;
             setTimeout(() => {
-                if (this.count >= this.wrapper.children.length - 1) {
-                    this.count = 0;
+                if (SliderSimple.COUNT >= this.wrapper.children.length - 1) {
+                    SliderSimple.COUNT = 0;
                     this.wrapper.style.transition = "unset";
                     this.wrapper.style.transform = `translateX(${0}px)`;
                 }
             }, this.speed);
         }
     };
-    slidePrevious = function () {
-        if (!this.isInMovement) {
-            this.toggleIsInMovement();
+    static slidePrevious = function () {
+        if (!SliderSimple.IS_IN_MOVEMENT) {
+            SliderSimple.toggleIsInMovement(this);
 
             this.wrapper.style.transition = `${this.speed}ms linear`;
-            this.count--;
-            if (this.count < 0) {
-                this.count = this.wrapper.children.length - 1;
-                const position = -this.elements[0].clientWidth * this.count;
+            SliderSimple.COUNT--;
+            if (SliderSimple.COUNT < 0) {
+                SliderSimple.COUNT = this.wrapper.children.length - 1;
+                const position =
+                    -this.elements[0].clientWidth * SliderSimple.COUNT;
                 this.wrapper.style.transition = "unset";
                 this.wrapper.style.transform = `translateX(${position}px)`;
 
-                this.isInMovement = false;
-                setTimeout(this.slidePrevious.bind(this), 1);
+                SliderSimple.IS_IN_MOVEMENT = false;
+                setTimeout(SliderSimple.slidePrevious.bind(this), 1);
             }
-            const position = -this.elements[0].clientWidth * this.count;
+            const position = -this.elements[0].clientWidth * SliderSimple.COUNT;
             this.wrapper.style.transform = `translateX(${position}px)`;
         }
     };
-    toggleIsInMovement = function () {
-        if (!this.isInMovement) {
-            this.isInMovement = true;
+    static toggleIsInMovement = function (vm) {
+        if (!SliderSimple.IS_IN_MOVEMENT) {
+            SliderSimple.IS_IN_MOVEMENT = true;
             setTimeout(() => {
-                this.isInMovement = false;
-            }, this.speed + 1);
+                SliderSimple.IS_IN_MOVEMENT = false;
+            }, vm.speed + 1);
         }
     };
-    stopTimer = function () {
-        console.log("stop");
-        clearInterval(this.timerId);
+    static stopTimer = function () {
+        clearInterval(SliderSimple.TIMER_ID);
     };
-    startTimer = function () {
-        console.log("start");
-        this.timerId = setInterval(() => {
-            this.slideNext();
+    static startTimer = function () {
+        SliderSimple.TIMER_ID = setInterval(() => {
+            SliderSimple.slideNext.bind(this);
         }, this.timing + this.speed);
     };
-    addListenerTimerMouseInOut = function () {
+    static addListenerTimerMouseInOut = function () {
+        console.log("startTimer:", this);
         Array.from(this.wrapper.children).forEach((child) => {
             child.children[0].addEventListener(
                 "mouseenter",
-                this.stopTimer.bind()
+                SliderSimple.stopTimer.bind(this)
             );
             child.children[0].addEventListener(
                 "mouseout",
-                this.startTimer.bind()
+                SliderSimple.startTimer.bind(this)
             );
         });
     };
 
-    touchStart = function () {
+    static touchStart = function () {
         event.preventDefault();
-        this.touchstartX = event.changedTouches[0].screenX;
+        SliderSimple.TOUCH_START_X = event.changedTouches[0].screenX;
     };
-    touchEnd = function () {
+    static touchEnd = function () {
+        console.log("touch end:", this);
+
         event.preventDefault();
-        this.touchendX = event.changedTouches[0].screenX;
-        this.handleGesture(this.touchendX, this.touchstartX);
+        SliderSimple.TOUCH_END_X = event.changedTouches[0].screenX;
+        SliderSimple.handleGesture(
+            this,
+            SliderSimple.TOUCH_END_X,
+            SliderSimple.TOUCH_START_X
+        );
     };
 
-    handleGesture = function () {
-        if (this.touchendX < this.touchstartX) {
-            this.slideNext();
+    static handleGesture = function (vm) {
+        if (SliderSimple.TOUCH_END_X < SliderSimple.TOUCH_START_X) {
+            SliderSimple.slideNext.bind(vm);
         }
 
-        if (this.touchendX > this.touchstartX) {
-            this.slidePrevious();
+        if (SliderSimple.TOUCH_END_X > SliderSimple.TOUCH_START_X) {
+            SliderSimple.slidePrevious.bind(vm);
         }
     };
 
-    createDots = function () {
-        this.dotsContainer.classList.add("hls_dots-container");
-        for (let i = 0; i < this.wrapper.children.length; i++) {
+    static createDots = function (vm) {
+        vm.dotsContainer.classList.add("hls_dots-container");
+        for (let i = 0; i < vm.elements.length; i++) {
             const button = document.createElement("button");
             button.classList.add("dot");
             button.dataset.img = i;
-            this.wrapper.children[i].dataset.img = i;
-            this.dotsContainer.append(button);
-            button.addEventListener("click", this.dotGoImg.bind(this, event));
+            vm.elements[i].dataset.img = i;
+            vm.dotsContainer.append(button);
+            button.addEventListener(
+                "click",
+                SliderSimple.dotGoImg.bind(vm, event)
+            );
         }
-        console.log("length:", this.dotsContainer);
-        this.dotsContainer.firstElementChild.classList.add("active");
+        vm.dotsContainer.firstElementChild.classList.add("active");
     };
-    dotGoImg() {
+    static dotGoImg = function () {
         const target = event.target;
         Array.from(this.dotsContainer.children).forEach((child) => {
             child.classList.remove("active");
         });
         target.classList.add("active");
-        this.count = target.dataset.img - 1;
-        this.isInMovement = false;
-        this.slideNext();
-    }
-    static test = function () {
-        return console.log("static test");
+        SliderSimple.COUNT = target.dataset.img - 1;
+        SliderSimple.IS_IN_MOVEMENT = false;
+        SliderSimple.slideNext.bind(this)();
     };
     init() {
-        // addBaseCSS(this.slider, this.wrapper, this.elements, this.padding);
-        // this.cloneNode();
+        SliderSimple.checkElementExistAndAddListener(this);
         SliderSimple.addBaseCSS(this);
         SliderSimple.cloneNode(this);
-        SliderSimple.test();
-        console.log("init:", this);
+
+        console.log("__INIT__:", this);
     }
 }
 
