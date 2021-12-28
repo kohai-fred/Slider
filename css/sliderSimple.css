@@ -1,0 +1,38 @@
+.hls_slider {
+    position: relative !important;
+    overflow: hidden !important;
+}
+.hls_navigation {
+    position: absolute;
+    z-index: 10;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+.hls_navigation > * {
+    width: 20%;
+    max-width: 50px;
+}
+.hls_wrapper {
+    display: flex !important;
+    /* overflow-x: hidden !important; */
+}
+.hls_wrapper > div {
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.hls_dots-container button {
+    width: 1.2em;
+    height: 1.2em;
+    margin: 0.2em;
+    border-radius: 50%;
+    background-color: blue;
+}
+
+.hls_dots-container button.active {
+    background-color: blueviolet;
+}

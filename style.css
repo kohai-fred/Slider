@@ -1,0 +1,29 @@
+@import "css/sliderSimple.css";
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+}
+main {
+    min-height: 100vh;
+    min-width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+img {
+    max-width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+.slider {
+    max-width: 350px;
+    border: 1px solid #ccc;
+    /* padding: 5px; */
+}
+/* .slider_wrapper {
+    display: flex;
+    overflow-x: hidden;
+} */
